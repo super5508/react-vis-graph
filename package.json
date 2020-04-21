@@ -8,13 +8,15 @@
     "@testing-library/user-event": "^7.1.2",
     "antd": "^4.1.4",
     "framer-motion": "^1.10.3",
+    "lodash": "^4.17.15",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-laag": "^1.7.3",
     "react-scripts": "3.4.1",
     "resize-observer-polyfill": "^1.5.1",
     "styled-components": "^5.1.0",
-    "styled-icons": "^10.2.1"
+    "styled-icons": "^10.2.1",
+    "vis": "^4.21.0-EOL"
   },
   "scripts": {
     "start": "react-scripts start",
