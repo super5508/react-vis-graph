@@ -10,7 +10,9 @@ import { Drawer, Tabs } from 'antd';
  * Icons
  */
 
-import { Layer, ListUl, Play } from "styled-icons/boxicons-regular";
+import { ListUl } from "styled-icons/boxicons-regular";
+import { SettingsInputHdmi as Connect } from 'styled-icons/material-twotone';
+import { ListSettings as Configure } from 'styled-icons/remix-line';
 
 /**
  * Components
@@ -23,23 +25,24 @@ const { TabPane } = Tabs;
  * Main
  */
 
-function Example({style, open, selectedNode}) {
+function Example({style, open, selectedNode, scale}) {
   const [visible, setVisible] = useState(false);
-  const [defaultTab, setDefaultTab] = useState("structures");
+  const [defaultTab, setDefaultTab] = useState("configure");
   return (
     <div style={style}>
       <AnimatePresence>
         {open && (
           <Menu
             items={[
-              { Icon: Layer, value: "structures", label: "Structures" },
+              { Icon: Configure, value: "configure", label: "Configure" },
               { Icon: ListUl, value: "attributes", label: "Attributes" },
-              { Icon: Play, value: "commands", label: "Commands" },
+              { Icon: Connect, value: "connect", label: "Connect" },
             ]}
             menuClick={value => {
               setVisible(true)
               setDefaultTab(value)
             }}
+            scale={scale}
           />
         )}
       </AnimatePresence>
@@ -52,13 +55,13 @@ function Example({style, open, selectedNode}) {
         width={350}
       >
         <Tabs activeKey={defaultTab}>
-          <TabPane tab="STRUCTURE" key="structures">
+          <TabPane tab="CONFIGURE" key="configure">
             <p>{selectedNode.options.label}</p>
           </TabPane>
           <TabPane tab="ATTRIBUTES" key="attributes">
             <p>{selectedNode.options.label}</p>
           </TabPane>
-          <TabPane tab="COMMANDS" key="commands">
+          <TabPane tab="CONNECT" key="connect">
             <p>{selectedNode.options.label}</p>
           </TabPane>
         </Tabs>
@@ -163,6 +166,7 @@ export class ProvisioningChart extends React.Component {
       y: 0,
       show: false,
       curNode: null,
+      scale: 1,
     }
   }
 
@@ -170,13 +174,28 @@ export class ProvisioningChart extends React.Component {
     this.network = createNetwork();
 
     this.network.on("selectNode", (params) => {
-      const x = this.network.body.view.translation.x + this.network.body.nodes[params.nodes[0]].x - 28;
-      const y = this.network.body.view.translation.y + this.network.body.nodes[params.nodes[0]].y - 28;
+      const x = this.network.body.view.translation.x + (this.network.body.nodes[params.nodes[0]].x - 28) * this.state.scale;
+      const y = this.network.body.view.translation.y + (this.network.body.nodes[params.nodes[0]].y - 28) * this.state.scale;
       this.setState({x, y, show: true, curNode: this.network.body.nodes[params.nodes[0]]});
     });
 
-    this.network.on("deselectNode", (params) => {
+    this.network.on("deselectNode", () => {
       this.setState({show: false})
+    });
+
+    this.network.on("dragStart", () => {
+      this.setState({show: false})
+    });
+
+    this.network.on("zoom", (param) => {
+      const scale = param.scale;
+      console.log(scale);
+      this.setState({scale});
+      if (this.state.curNode) {
+        const x = this.network.body.view.translation.x + (this.state.curNode.x - 28) * this.state.scale;
+        const y = this.network.body.view.translation.y + (this.state.curNode.y - 28) * this.state.scale;
+        this.setState({x, y});
+      }
     });
   }
 
@@ -187,7 +206,7 @@ export class ProvisioningChart extends React.Component {
   }
 
   render() {
-    const {height, width, x, y, show, curNode} = this.state;
+    const {height, width, x, y, show, curNode, scale} = this.state;
     return (
       <div style={{position: 'relative'}}>
         <div style={{height, width, position: 'relative', border: '1px solid #ccc'}} id="provisioning-network">
@@ -201,6 +220,7 @@ export class ProvisioningChart extends React.Component {
               left: `${x}px`,
             }}
             selectedNode={curNode}
+            scale={scale}
           />
         )}
       </div>

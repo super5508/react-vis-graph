@@ -78,7 +78,8 @@ function MenuItem({
   onClick,
   label,
   index,
-  totalItems
+  totalItems,
+  scale,
 }) {
   const [isOpen, bind] = useHover({ delayEnter: 300, delayLeave: 100 });
 
@@ -122,7 +123,7 @@ function MenuItem({
           exit={{ x: 0, opacity: 0 }}
           transformTemplate={({ x }) => {
             const value = parseFloat(x.replace("px", ""));
-            return getTransform(value, RADIUS, index);
+            return getTransform(value, RADIUS, index, scale);
           }}
           transition={{
             delay: index * 0.025,
@@ -153,7 +154,7 @@ const MenuBase = styled.div`
   border-radius: 50%;
 `;
 
-const Menu = React.forwardRef(function Menu({ style, close, items, menuClick }, ref) {
+const Menu = React.forwardRef(function Menu({ style, close, items, menuClick, scale }, ref) {
   return (
     <MenuBase ref={ref} style={style} onClick={close}>
       {items.map((item, index) => (
@@ -164,6 +165,7 @@ const Menu = React.forwardRef(function Menu({ style, close, items, menuClick }, 
           onClick={() => menuClick(item.value)}
           index={index}
           totalItems={items.length}
+          scale={scale}
         />
       ))}
     </MenuBase>
