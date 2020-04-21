@@ -19,8 +19,8 @@ import { motion, AnimatePresence } from "framer-motion";
 function getTransform(progress, radius, index) {
   const value = (index / 8) * progress;
 
-  const x = radius * Math.cos(Math.PI * 2 * (value - 0.5));
-  const y = radius * Math.sin(Math.PI * 2 * (value - 0.5));
+  const x = radius * Math.cos(Math.PI * 2 * (value - 0.5)) - 28;
+  const y = radius * Math.sin(Math.PI * 2 * (value - 0.5)) - 28;
 
   const scale = progress / 2 + 0.5;
 

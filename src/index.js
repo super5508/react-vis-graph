@@ -3,9 +3,7 @@ import 'antd/dist/antd.css';
 import React, {Fragment, useState} from "react";
 import vis from "vis";
 import ReactDOM from "react-dom";
-import ResizeObserver from "resize-observer-polyfill";
 import { AnimatePresence } from "framer-motion";
-import { ToggleLayer } from "react-laag";
 import { Drawer, Tabs } from 'antd';
 
 /**
@@ -18,7 +16,6 @@ import { Layer, ListUl, Play } from "styled-icons/boxicons-regular";
  * Components
  */
 
-import Button from "./button";
 import Menu from "./menu";
 
 const { TabPane } = Tabs;
@@ -26,43 +23,26 @@ const { TabPane } = Tabs;
  * Main
  */
 
-function Example({style}) {
+function Example({style, open, selectedNode}) {
   const [visible, setVisible] = useState(false);
   const [defaultTab, setDefaultTab] = useState("structures");
-
   return (
     <div style={style}>
-      <ToggleLayer
-        ResizeObserver={ResizeObserver}
-        placement={{
-          anchor: "CENTER"
-        }}
-        renderLayer={({ isOpen, layerProps, close }) => {
-          return (
-            <AnimatePresence>
-              {isOpen && (
-                <Menu
-                  {...layerProps}
-                  close={close}
-                  items={[
-                    { Icon: Layer, value: "structures", label: "Structures" },
-                    { Icon: ListUl, value: "attributes", label: "Attributes" },
-                    { Icon: Play, value: "commands", label: "Commands" },
-                  ]}
-                  menuClick={value => {
-                    setVisible(true)
-                    setDefaultTab(value)
-                  }}
-                />
-              )}
-            </AnimatePresence>
-          );
-        }}
-      >
-        {({ triggerRef, toggle, isOpen }) => (
-          <Button ref={triggerRef} onClick={toggle} isOpen={isOpen} />
+      <AnimatePresence>
+        {open && (
+          <Menu
+            items={[
+              { Icon: Layer, value: "structures", label: "Structures" },
+              { Icon: ListUl, value: "attributes", label: "Attributes" },
+              { Icon: Play, value: "commands", label: "Commands" },
+            ]}
+            menuClick={value => {
+              setVisible(true)
+              setDefaultTab(value)
+            }}
+          />
         )}
-      </ToggleLayer>
+      </AnimatePresence>
       <Drawer
         title="Provisioning Drawer"
         placement="right"
@@ -73,25 +53,13 @@ function Example({style}) {
       >
         <Tabs activeKey={defaultTab}>
           <TabPane tab="STRUCTURE" key="structures">
-            <p>Structures go below.</p>
-            <p>Structures go below.</p>
-            <p>Structures go below.</p>
-            <p>Structures go below.</p>
-            <p>Structures go below.</p>
+            <p>{selectedNode.options.label}</p>
           </TabPane>
           <TabPane tab="ATTRIBUTES" key="attributes">
-            <p>Attributes go below.</p>
-            <p>Attributes go below.</p>
-            <p>Attributes go below.</p>
-            <p>Attributes go below.</p>
-            <p>Attributes go below.</p>
+            <p>{selectedNode.options.label}</p>
           </TabPane>
           <TabPane tab="COMMANDS" key="commands">
-            <p>Commands go below.</p>
-            <p>Commands go below.</p>
-            <p>Commands go below.</p>
-            <p>Commands go below.</p>
-            <p>Commands go below.</p>
+            <p>{selectedNode.options.label}</p>
           </TabPane>
         </Tabs>
       </Drawer>
@@ -194,20 +162,21 @@ export class ProvisioningChart extends React.Component {
       x: 0,
       y: 0,
       show: false,
+      curNode: null,
     }
   }
 
   componentDidMount() {
     this.network = createNetwork();
 
-    this.network.on("hoverNode", (params) => {
-      console.log(params);
-      console.log(this.network);
-      this.setState({x: params.pointer.DOM.x, y: params.pointer.DOM.y, show: true})
+    this.network.on("selectNode", (params) => {
+      const x = this.network.body.view.translation.x + this.network.body.nodes[params.nodes[0]].x - 28;
+      const y = this.network.body.view.translation.y + this.network.body.nodes[params.nodes[0]].y - 28;
+      this.setState({x, y, show: true, curNode: this.network.body.nodes[params.nodes[0]]});
     });
 
-    this.network.on("blurNode", (params) => {
-      this.setState({x: params.pointer.DOM.x, y: params.pointer.DOM.y})
+    this.network.on("deselectNode", (params) => {
+      this.setState({show: false})
     });
   }
 
@@ -218,17 +187,21 @@ export class ProvisioningChart extends React.Component {
   }
 
   render() {
-    const {height, width, x, y, show} = this.state;
+    const {height, width, x, y, show, curNode} = this.state;
     return (
       <div style={{position: 'relative'}}>
         <div style={{height, width, position: 'relative', border: '1px solid #ccc'}} id="provisioning-network">
         </div>
         {show && (
-          <Example style={{
-            position: 'absolute',
-            top: `${y}px`,
-            left: `${x}px`,
-          }}/>
+          <Example 
+            open={show}
+            style={{
+              position: 'absolute',
+              top: `${y}px`,
+              left: `${x}px`,
+            }}
+            selectedNode={curNode}
+          />
         )}
       </div>
     )
