@@ -1,10 +1,10 @@
 import "./styles.css";
 import 'antd/dist/antd.css';
-import React, {Fragment, useState} from "react";
+import React, {Fragment, useState, useEffect} from "react";
 import vis from "vis";
 import ReactDOM from "react-dom";
 import { AnimatePresence } from "framer-motion";
-import { Drawer, Tabs } from 'antd';
+import { Drawer, Tabs, Checkbox, Modal } from 'antd';
 
 /**
  * Icons
@@ -20,14 +20,112 @@ import { ListSettings as Configure } from 'styled-icons/remix-line';
 
 import Menu from "./menu";
 
+const { confirm } = Modal;
 const { TabPane } = Tabs;
 /**
  * Main
  */
 
-function Example({style, open, selectedNode, scale}) {
+const interfaceData = [
+  [],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+  [
+    {id: 0, name: 'Interface 1', to: null, connected: false},
+    {id: 1, name: 'Interface 2', to: null, connected: false},
+    {id: 2, name: 'Interface 3', to: null, connected: false},
+    {id: 3, name: 'Interface 4', to: null, connected: false},
+  ],
+];
+
+let pickedTime = 0;
+let removable = false;
+let removeInterface = {
+  nodeId: null,
+  interfaceId: null,
+};
+
+let pickedInterface = [
+  {
+    nodeId: null,
+    interfaceId: null,
+  },
+  {
+    nodeId: null,
+    interfaceId: null,
+  }
+];
+
+const getInterfaces = curNode => {
+  return interfaceData[curNode];
+}
+
+function Example({style, open, selectedNode, scale, updateEdge}) {
   const [visible, setVisible] = useState(false);
   const [defaultTab, setDefaultTab] = useState("configure");
+  const [interfaces, setInterfaces] = useState([]);
+
+  const onChangeInterfaceStatus = (event, id) => {
+    const checked = event.target.checked;
+    if (checked === false) {
+      confirm({
+        title: 'Do you Want to remove this connection?',
+        content: 'Content goes here',
+        onOk() {
+          interfaces[id].connected = checked;
+          setInterfaces([...interfaces]);
+          removable = true;
+          removeInterface = {nodeId: selectedNode.id, interfaceId: id};
+          updateEdge();
+        },
+        onCancel() {
+          return;
+        },
+      });
+    } else {
+      interfaces[id].connected = checked;
+      pickedInterface[pickedTime] = {nodeId: selectedNode.id, interfaceId: id};
+      pickedTime += 1;
+      if (pickedTime === 2) {
+        updateEdge();
+        pickedTime = 0;
+      }
+    }
+    setInterfaces([...interfaces]);
+  }
+
+  useEffect(() => {
+    setInterfaces(getInterfaces(selectedNode.id));
+  }, [selectedNode]);
+
   return (
     <div style={style}>
       <AnimatePresence>
@@ -66,6 +164,9 @@ function Example({style, open, selectedNode, scale}) {
           </TabPane>
           <TabPane tab="CONNECT" key="connect">
             <p>{selectedNode.options.label}</p>
+            {
+              interfaces.map(item => <div key={item.name}><Checkbox onChange={e => onChangeInterfaceStatus(e, item.id)} checked={item.connected}>{item.name}</Checkbox></div>)
+            }
           </TabPane>
         </Tabs>
       </Drawer>
@@ -115,7 +216,7 @@ const createNetwork = () => {
       randomSeed: 541964,
       improvedLayout:true,
       hierarchical: {
-        enabled: true,
+        enabled: false,
         sortMethod: 'hubsize',
         edgeMinimization: true,
         blockShifting: true,
@@ -201,6 +302,36 @@ export class ProvisioningChart extends React.Component {
     });
   }
 
+  addEdge() {
+    if (this.network) {
+      if (removable) {
+        interfaceData.forEach((singleInterface, index) => {
+          const find = singleInterface.find(inter => inter.to === removeInterface.nodeId);
+          if (find) {
+            const edges = this.network.body.data.edges._data;
+            let id = null;
+            Object.keys(edges).forEach((key, idx) => {
+              if ((edges[key].from === index && edges[key].to === find.to) || (edges[key].to === index && edges[key].from === find.to)) {
+                id = key;
+              }
+            });
+            console.log(edges, id);
+            this.network.body.data.edges.remove([id]);
+            find.connected = false;
+          }
+        })
+      } else {
+        if (!interfaceData[pickedInterface[0].nodeId][pickedInterface[0].interfaceId].to && !interfaceData[pickedInterface[1].nodeId][pickedInterface[1].interfaceId].to) {
+          interfaceData[pickedInterface[0].nodeId][pickedInterface[0].interfaceId].to = pickedInterface[1].nodeId;
+          interfaceData[pickedInterface[1].nodeId][pickedInterface[1].interfaceId].to = pickedInterface[0].nodeId;
+          this.network.body.data.edges.add([{from: pickedInterface[0].nodeId, to: pickedInterface[1].nodeId}]);
+        } else if (interfaceData[pickedInterface[0].nodeId][pickedInterface[0].interfaceId].to) {
+          console.log('removing')
+        }
+      }
+    }
+  }
+
   componentWillUnmount() {
     if(this.network) {
       this.network.destroy();
@@ -223,6 +354,7 @@ export class ProvisioningChart extends React.Component {
             }}
             selectedNode={curNode}
             scale={scale}
+            updateEdge={() => this.addEdge()}
           />
         )}
       </div>
