@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import ResizeObserver from "resize-observer-polyfill";
 import {
@@ -155,8 +155,31 @@ const MenuBase = styled.div`
 `;
 
 const Menu = React.forwardRef(function Menu({ style, close, items, menuClick, scale }, ref) {
+  const [rotate, setRotate] = useState(45);
+  const [opacity, setOpacity] = useState(0);
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotate(rotate => rotate < 135 ? rotate + 5 : 135);
+      setOpacity(opacity => opacity + 0.1);
+    }, 1);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <MenuBase ref={ref} style={style} onClick={close}>
+      <div style={{
+        width: 150 * scale,
+        height: 150 * scale,
+        position: 'absolute',
+        top: -50 * scale,
+        left: -50 * scale,
+        transform: `rotate(${rotate}deg)`,
+        opacity: opacity,
+      }}>
+        <img src="back.svg" alt="back" style={{width: '100%'}}/>
+      </div>
       {items.map((item, index) => (
         <MenuItem
           key={index}

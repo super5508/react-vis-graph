@@ -43,6 +43,9 @@ function Example({style, open, selectedNode, scale}) {
               setDefaultTab(value)
             }}
             scale={scale}
+            style={{
+              position: 'relative'
+            }}
           />
         )}
       </AnimatePresence>
@@ -189,7 +192,6 @@ export class ProvisioningChart extends React.Component {
 
     this.network.on("zoom", (param) => {
       const scale = param.scale;
-      console.log(scale);
       this.setState({scale});
       if (this.state.curNode) {
         const x = this.network.body.view.translation.x + (this.state.curNode.x - 28) * this.state.scale;
