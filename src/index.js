@@ -4,7 +4,7 @@ import React, {Fragment, useState, useEffect} from "react";
 import vis from "vis";
 import ReactDOM from "react-dom";
 import { AnimatePresence } from "framer-motion";
-import { Drawer, Tabs, Checkbox, Modal } from 'antd';
+import { Drawer, Tabs, Checkbox, Modal, Button } from 'antd';
 
 /**
  * Icons
@@ -91,6 +91,7 @@ const getInterfaces = curNode => {
 function Example({style, open, selectedNode, scale, updateEdge, drawer, updateDrawer}) {
   const [defaultTab, setDefaultTab] = useState("configure");
   const [interfaces, setInterfaces] = useState([]);
+  const [selectedInterfaces, setSelectedInterfaces] = useState(interfaceData[selectedNode.id]);
 
   const onChangeInterfaceStatus = (event, id) => {
     const checked = event.target.checked;
@@ -120,6 +121,14 @@ function Example({style, open, selectedNode, scale, updateEdge, drawer, updateDr
       updateDrawer(false);
     }
     setInterfaces([...interfaces]);
+  }
+
+  const addInterface = () => {
+    setSelectedInterfaces([
+      ...selectedInterfaces,
+      {id: interfaceData[selectedNode.id].length, name: `Interface ${interfaceData[selectedNode.id].length + 1}`, to: null, connected: false}
+    ]);
+    interfaceData[selectedNode.id].push({id: interfaceData[selectedNode.id].length, name: `Interface ${interfaceData[selectedNode.id].length + 1}`, to: null, connected: false});
   }
 
   useEffect(() => {
@@ -164,8 +173,12 @@ function Example({style, open, selectedNode, scale, updateEdge, drawer, updateDr
           </TabPane>
           <TabPane tab="CONNECT" key="connect">
             <p>{selectedNode.options.label}</p>
+            <div>
+              <Button onClick={() => addInterface()}>Add Interface</Button>
+            </div>
+            <br/>
             {
-              interfaces.map(item => <div key={item.name}><Checkbox onChange={e => onChangeInterfaceStatus(e, item.id)} checked={item.connected}>{item.name}</Checkbox></div>)
+              selectedInterfaces.map(item => <div key={item.name}><Checkbox onChange={e => onChangeInterfaceStatus(e, item.id)} checked={item.connected}>{item.name}</Checkbox></div>)
             }
           </TabPane>
         </Tabs>
@@ -316,7 +329,6 @@ export class ProvisioningChart extends React.Component {
                 id = key;
               }
             });
-            console.log(edges, id);
             this.network.body.data.edges.remove([id]);
             find.connected = false;
           }
@@ -327,7 +339,7 @@ export class ProvisioningChart extends React.Component {
           interfaceData[pickedInterface[1].nodeId][pickedInterface[1].interfaceId].to = pickedInterface[0].nodeId;
           this.network.body.data.edges.add([{from: pickedInterface[0].nodeId, to: pickedInterface[1].nodeId}]);
         } else if (interfaceData[pickedInterface[0].nodeId][pickedInterface[0].interfaceId].to) {
-          console.log('removing')
+          
         }
       }
     }
@@ -341,7 +353,6 @@ export class ProvisioningChart extends React.Component {
 
   render() {
     const {height, width, x, y, show, curNode, scale, drawer} = this.state;
-    console.log(drawer);
     return (
       <div style={{position: 'relative'}}>
         <div style={{height, width, position: 'relative', border: '1px solid #ccc'}} id="provisioning-network">
