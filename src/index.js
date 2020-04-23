@@ -88,8 +88,7 @@ const getInterfaces = curNode => {
   return interfaceData[curNode];
 }
 
-function Example({style, open, selectedNode, scale, updateEdge}) {
-  const [visible, setVisible] = useState(false);
+function Example({style, open, selectedNode, scale, updateEdge, drawer, updateDrawer}) {
   const [defaultTab, setDefaultTab] = useState("configure");
   const [interfaces, setInterfaces] = useState([]);
 
@@ -118,6 +117,7 @@ function Example({style, open, selectedNode, scale, updateEdge}) {
         updateEdge();
         pickedTime = 0;
       }
+      updateDrawer(false);
     }
     setInterfaces([...interfaces]);
   }
@@ -137,7 +137,7 @@ function Example({style, open, selectedNode, scale, updateEdge}) {
               { Icon: Connect, value: "connect", label: "Connect" },
             ]}
             menuClick={value => {
-              setVisible(true)
+              updateDrawer(true)
               setDefaultTab(value)
             }}
             scale={scale}
@@ -151,8 +151,8 @@ function Example({style, open, selectedNode, scale, updateEdge}) {
         title="Provisioning Drawer"
         placement="right"
         closable={true}
-        onClose={() => setVisible(false)}
-        visible={visible}
+        onClose={() => updateDrawer(false)}
+        visible={drawer}
         width={350}
       >
         <Tabs activeKey={defaultTab}>
@@ -271,6 +271,7 @@ export class ProvisioningChart extends React.Component {
       show: false,
       curNode: null,
       scale: 1,
+      drawer: false,
     }
   }
 
@@ -339,7 +340,8 @@ export class ProvisioningChart extends React.Component {
   }
 
   render() {
-    const {height, width, x, y, show, curNode, scale} = this.state;
+    const {height, width, x, y, show, curNode, scale, drawer} = this.state;
+    console.log(drawer);
     return (
       <div style={{position: 'relative'}}>
         <div style={{height, width, position: 'relative', border: '1px solid #ccc'}} id="provisioning-network">
@@ -354,6 +356,8 @@ export class ProvisioningChart extends React.Component {
             }}
             selectedNode={curNode}
             scale={scale}
+            drawer={drawer}
+            updateDrawer={value => this.setState({drawer: value})}
             updateEdge={() => this.addEdge()}
           />
         )}
